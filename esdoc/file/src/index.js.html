@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/index.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-moveForward">moveForward</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-passiveMode">passiveMode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-playSong">playSong</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-programSong">programSong</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-safeMode">safeMode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialClose">serialClose</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialOpen">serialOpen</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialWrite">serialWrite</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-stopMotion">stopMotion</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-turnClockwise">turnClockwise</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-turnCounterClockwise">turnCounterClockwise</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-wait">wait</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import &apos;babel-polyfill&apos;
+import {SerialPort, list} from &apos;serialport&apos;
+import {platform} from &apos;os&apos;
+
+const log = require(&apos;debug&apos;)(&apos;Vaccom&apos;)
+
+function findUsbPort() {
+  return new Promise((resolve, reject) =&gt; {
+    list((err, ports) =&gt; {
+      if (err) {
+        return reject(err)
+      }
+      const usbComPorts = ports
+        .map(port =&gt; port.comName)
+        .filter(name =&gt; name.toLowerCase().indexOf(&apos;usb&apos;) !== -1);
+      if (usbComPorts.length &gt; 0) {
+        return resolve(usbComPorts[0])
+      }
+      return reject(new Error(&apos;Could not find USB COM port&apos;))
+    })
+  })
+}
+
+// TODO: Create a constants file later...
+const CREATE_2_BAUDRATE = 115200
+
+/**
+ * Roomba Commands
+ */
+const Command = {
+    START: 0x80,
+    SAFE: 0x83,
+    DRIVE: 0x89,
+    LED: 0x8B,
+    SONG: 0x8C,
+    PLAY: 0x8D,
+    STREAM: 0x94,
+    SENSORS: 0x8E,
+    CLEAN: 0x87,
+    SEEK_DOCK: 0x8F
+}
+
+// Special values for movement
+const STRAIGHT = 32768;
+const CLOCKWISE = -1;
+const COUNTER_CLOCKWISE = 1;
+
+// TODO: Build wait times into the commands (since they are required)
+// TODO: Only export the useable methods, not the raw communication methods...
+// TODO: Add eslint
+
+let serialPort;
+
+/**
+ * Opens communications for future commands
+ * @param {String} comPort (not required, if left undefined will try to automatically find USB COM port)
+ */
+export function serialOpen(comPort) {
+  const findPort = comPort ? Promise.resolve(comPort) : findUsbPort()
+  return findPort.then(port =&gt; {
+    // Setting global port here for re-use
+    serialPort = new SerialPort(port, {
+      baudrate: CREATE_2_BAUDRATE
+    }, false) // this is the openImmediately flag [default is true]
+    return new Promise((resolve, reject) =&gt; {
+      serialPort.open(err =&gt; err ? reject(err) : resolve())
+    })
+  })
+}
+
+/**
+ * Close communications
+ */
+export function serialClose() {
+  return new Promise((resolve, reject) =&gt; {
+    serialPort.close(err =&gt; err ? reject(err) : resolve())
+  })
+}
+
+/**
+ * Write raw command/data to serial port (not recommended)
+ * @param  {Number} command
+ * @param  {Array/Buffer} data
+ */
+export function serialWrite(command, data) {
+  const buffer = [command].concat(data || [])
+  return new Promise((resolve, reject) =&gt; {
+    serialPort.write(buffer, (err, result) =&gt; err ? reject(err) : resolve(result))
+  })
+}
+
+/**
+ * Instructs Roomba to wait to a specified time
+ * @param  {Number} ms milliseconds to wait
+ */
+export function wait(ms) {
+  return new Promise(resolve =&gt; setTimeout(resolve, ms))
+}
+
+/**
+ * Instructs Rooma to go into safe mode
+ */
+export function safeMode() {
+  log(&apos;starting safe mode&apos;)
+  return serialWrite(Command.SAFE)
+}
+
+/**
+ * Instructs Rooma to go into passive mode
+ */
+export function passiveMode() {
+  log(&apos;starting passive mode&apos;)
+  return serialWrite(Command.START)
+}
+
+/**
+ * Move Roomba Forward
+ * @param  {Number} velocity mm/s
+ * @param  {Number} radius   mm (default is straight)
+ */
+export function moveForward(velocity, radius = STRAIGHT) {
+  if (velocity &lt; -500 || velocity &gt; 500) {
+    throw new Error(&apos;Must use velocity between -500 and 500 mm/s&apos;);
+  }
+  if (radius !== STRAIGHT &amp;&amp; (radius &lt; -2000 || radius &gt; 2000)) {
+    throw new Error(&apos;Must use radius between -2000 and 2000 mm&apos;);
+  }
+  log(`moving forward with velocity ${velocity} and radius ${radius}`);
+  const velocityBuffer = new Buffer(2);
+  velocityBuffer.writeInt16BE(velocity);
+  const radiusBuffer = new Buffer(2);
+  if (radius === STRAIGHT) {
+    radiusBuffer.writeUInt16BE(radius);
+  } else {
+    radiusBuffer.writeInt16BE(radius);
+  }
+  return serialWrite(Command.DRIVE, [...velocityBuffer, ...radiusBuffer]);
+}
+
+/**
+ * Instructs Rooma to stop all motion
+ */
+export function stopMotion() {
+  log(&apos;stopping motion&apos;);
+  return moveForward(0);
+}
+
+/**
+ * Rotate Roomba clockwise with a specificed velocity
+ * @param  {Number} velocity (default is 100)
+ */
+export function turnClockwise(velocity = 100) {
+  log(`rotating clockwise with ${velocity} mm/s velocity`);
+  return moveForward(velocity, CLOCKWISE);
+}
+
+/**
+ * Rotate Roomba counter clockwise with a specificed velocity
+ * @param  {Number} velocity (default is 100)
+ */
+export function turnCounterClockwise(velocity = 100) {
+  log(`rotating counter clockwise with ${velocity} mm/s velocity`);
+  return moveForward(velocity, COUNTER_CLOCKWISE);
+}
+
+/**
+ * Program song into roomba memory
+ * @param  {Number} songNumber
+ * @param  {Array} notes      note numbers
+ * @param  {Array} durations  note durations (must be same length as notes)
+ */
+export function programSong(songNumber, notes, durations) {
+  // Maybe move this out into its own file... or a music file
+  // http://www.irobotweb.com/~/media/MainSite/PDFs/About/STEM/Create/iRobot_Roomba_600_Open_Interface_Spec.pdf?la=en
+  if (notes.length !== durations.length) {
+    throw new Error(&apos;Notes and durations must be of the same length&apos;);
+  }
+  if (notes.length &gt; 16) {
+    throw new Error(&apos;Songs are limited to 16 notes&apos;);
+  }
+  const song = Array(notes.length * 2)
+    .fill()
+    .map((_, i) =&gt; i % 2 === 0 ? notes[i / 2] : durations[(i - 1) / 2])
+  log(`programming song ${songNumber} with ${notes.length} notes`)
+  return serialWrite(Command.SONG, [songNumber, notes.length, ...song])
+}
+
+/**
+ * Play specified song
+ * @param  {Number} songNumber
+ */
+export function playSong(songNumber) {
+  if (songNumber &lt; 0 || songNumber &gt; 4) {
+    throw new Error(&apos;Song number can be (0-4)&apos;);
+  }
+  log(`playing song ${songNumber}`)
+  return serialWrite(Command.PLAY, [songNumber])
+  // Find a way to wait the correct time here maybe...
+}
+
+// TODO: Way down the line... allow users to play MIDI files somehow.
+// - Choose one instrument (argument) -&gt; must be linear...
+// - Convert notes to roomba notes
+// - Break into songs
+// - Program/Play songs in sequence
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

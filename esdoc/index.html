@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl">
+  <title data-ice="title">API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-moveForward">moveForward</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-passiveMode">passiveMode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-playSong">playSong</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-programSong">programSong</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-safeMode">safeMode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialClose">serialClose</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialOpen">serialOpen</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-serialWrite">serialWrite</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-stopMotion">stopMotion</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-turnClockwise">turnClockwise</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-turnCounterClockwise">turnCounterClockwise</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-wait">wait</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h3 id="vaccom">Vaccom</h3>
+<p>A module for controlling the Roomba iCreate 2 robot.</p>
+<p>Built to make vacuum robot programming easy!</p>
+<p><strong>Documentation is also published and can be generated from the project.</strong></p>
+<p>Music Example:</p>
+<pre><code class="lang-js"><code class="source-code prettyprint">import {serialOpen, serialClose, wait, serialWrite, safeMode, passiveMode, programSong, playSong} from &apos;./index&apos;
+
+const B = 71
+const E = 71 + 4
+const F = 71 + 5
+const G = 71 + 7
+const Gs = 71 + 8
+
+const quarterNote = 1000 / 4
+
+const song1Notes = [B,E,B,G,B,E,B,G,B,E,B,G,B,E,B,G]
+const song2Notes = [B,F,B,Gs,B,F,B,Gs,B,F,B,Gs,B,F,B,Gs]
+
+serialOpen()
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; safeMode())
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; programSong(0, song1Notes, Array(song1Notes.length).fill(16)))
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; programSong(1, song2Notes, Array(song2Notes.length).fill(16)))
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; playSong(0))
+  .then(() =&gt; wait(quarterNote * song1Notes.length + 10))
+  .then(() =&gt; playSong(1))
+  .then(() =&gt; wait(quarterNote * song2Notes.length + 10))
+  .then(() =&gt; passiveMode())
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; serialClose())</code>
+</code></pre>
+<p>Movement Example:</p>
+<pre><code class="lang-js"><code class="source-code prettyprint">import {serialOpen, serialClose, wait, safeMode, moveForward, stopMotion, turnClockwise} from &apos;./index&apos;
+
+serialOpen()
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; safeMode())
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; moveForward(100))
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; stopMotion())
+  .then(() =&gt; turnClockwise())
+  .then(() =&gt; wait(1500))
+  .then(() =&gt; stopMotion())
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; moveForward(100))
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; stopMotion())
+  .then(() =&gt; wait(1000))
+  .then(() =&gt; serialClose())
+  .catch(e =&gt; console.error(e.stack))
+  .then(() =&gt; serialClose())</code>
+</code></pre>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
