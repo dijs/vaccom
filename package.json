@@ -1,6 +1,6 @@
 {
   "name": "vaccom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Module for controlling Roomba iCreate 2",
   "main": "dist/index.js",
   "scripts": {
