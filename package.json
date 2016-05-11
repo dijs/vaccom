@@ -7,7 +7,20 @@
     "build": "babel src -d dist",
     "docs": "esdoc -c esdoc.json"
   },
-  "author": "Richard van der Dys",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/dijs/vaccom.git"
+  },
+  "keywords": [
+    "vacuum",
+    "robot",
+    "roomba",
+    "icreate"
+  ],
+  "author": {
+    "name": "Richard van der Dys",
+    "email": "richard.vanderdys@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "babel-polyfill": "^6.7.4",

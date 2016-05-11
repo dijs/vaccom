@@ -1,3 +1,4 @@
+[![NPM Version](https://img.shields.io/npm/v/vaccom.svg)](https://www.npmjs.com/package/vaccom)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 
 ### Vaccom
