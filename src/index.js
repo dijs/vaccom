@@ -1,25 +1,8 @@
 import 'babel-polyfill'
 import {SerialPort, list} from 'serialport'
-import {platform} from 'os'
+import debug from 'debug'
 
-const log = require('debug')('Vaccom')
-
-function findUsbPort() {
-  return new Promise((resolve, reject) => {
-    list((err, ports) => {
-      if (err) {
-        return reject(err)
-      }
-      const usbComPorts = ports
-        .map(port => port.comName)
-        .filter(name => name.toLowerCase().indexOf('usb') !== -1);
-      if (usbComPorts.length > 0) {
-        return resolve(usbComPorts[0])
-      }
-      return reject(new Error('Could not find USB COM port'))
-    })
-  })
-}
+const log = debug('Vaccom')
 
 // TODO: Create a constants file later...
 const CREATE_2_BAUDRATE = 115200
@@ -45,19 +28,40 @@ const STRAIGHT = 32768;
 const CLOCKWISE = -1;
 const COUNTER_CLOCKWISE = 1;
 
+const FALLBACK_PORT = '/dev/ttyAMA0';
+
 // TODO: Build wait times into the commands (since they are required)
 // TODO: Only export the useable methods, not the raw communication methods...
 // TODO: Add eslint
 
 let serialPort;
 
+function findComPort() {
+  log('Trying to find communication port')
+  return new Promise((resolve, reject) => {
+    list((err, ports) => {
+      if (err) {
+        return reject(err)
+      }
+      const usbComPorts = ports
+        .map(port => port.comName)
+        .filter(name => name.toLowerCase().indexOf('usb') !== -1);
+      if (usbComPorts.length > 0) {
+        return resolve(usbComPorts[0])
+      }
+      return resolve(FALLBACK_PORT)
+    })
+  })
+}
+
 /**
  * Opens communications for future commands
- * @param {String} comPort (not required, if left undefined will try to automatically find USB COM port)
+ * @param {String} comPort (not required, if left undefined will try to automatically find a COM port)
  */
 export function serialOpen(comPort) {
-  const findPort = comPort ? Promise.resolve(comPort) : findUsbPort()
+  const findPort = comPort ? Promise.resolve(comPort) : findComPort()
   return findPort.then(port => {
+    log(`Using communication port "${port}"`)
     // Setting global port here for re-use
     serialPort = new SerialPort(port, {
       baudrate: CREATE_2_BAUDRATE
